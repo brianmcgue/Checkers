@@ -1,47 +1,53 @@
+require 'colorize'
 require_relative 'piece.rb'
 
 class Board
   attr_accessor :grid
 
-  def initialize
+  def initialize(set_up = true)
     @grid = make_grid
-    set_pieces
+    set_pieces if set_up
+  end
+
+  def [](position)
+    @grid[position[0]][position[1]]
+  end
+
+  def []=(position, piece)
+    @grid[position[0]][position[1]] = piece
+  end
+
+  def empty?(position)
+    self[position].nil?
   end
 
   def perform_moves!(move_sequence)
-    # This is where I left off
+
   end
 
   def perform_jump(start,finish)
-    start_spot = @grid[start[0]][start[1]]
-    finish_spot = @grid[finish[0]][finish[1]]
-    jump_spot = @grid[(start[0] + finish[0])/2][(start[1] + finish[1])/2]
-    empty_start = start_spot.nil?
-    empty_finish = finish_spot.nil?
-    start_includes_finish = start_spot.moves.include?(finish)
-    empty_jump = jump_spot.nil?
-    start_color_diff_from_jump_color = jump_spot.color != start_spot.color
-    !empty_start && empty_finish && start_includes_finish && !empty_jump &&
+    jump = [(start[0] + finish[0])/2, (start[1] + finish[1])/2]
+    return false if self.empty?(jump)
+    start_includes_finish = self[start].moves.include?(finish)
+    start_color_diff_from_jump_color = self[jump].color != self[start].color
+    !self.empty?(start) && self.empty?(finish) && start_includes_finish &&
                     start_color_diff_from_jump_color
   end
 
   def perform_slide(start,finish)
-    start_spot = @grid[start[0]][start[1]]
-    finish_spot = @grid[finish[0]][finish[1]]
-    empty_start = start_spot.nil?
-    empty_finish = finish_spot.nil?
-    start_includes_finish = start_spot.moves.include?(finish)
-    !empty_start && empty_finish && start_includes_finish
+    start_includes_finish = self[start].moves.include?(finish)
+    !self.empty?(start) && self.empty?(finish) && start_includes_finish
   end
 
   def to_s
     output = ""
-    @grid.each_with_index do |row,i|
-      row.each do |piece|
+    10.times do |row|
+      @grid[row].each_with_index do |piece, col|
+        bg = (row.odd? ^ col.odd? ? :light_white : :white)
         if piece.nil?
-          output += "  "
+          output += "  ".colorize(:color => :black, :background => bg)
         else
-          output += " #{piece}"
+          output += "#{piece} ".colorize(:color => :black, :background => bg)
         end
       end
       output << "\n"
@@ -63,6 +69,7 @@ class Board
           @grid[row][col] = Piece.new([row,col],:black,self)
         else
           @grid[row][col] = Piece.new([row,col],:red,self)
+        end
       end
     end
   end
