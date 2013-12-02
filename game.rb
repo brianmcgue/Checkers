@@ -46,8 +46,10 @@ class Game
   def play_turn
     begin
       move_seq = get_input
-      unless @board[move_seq.first].color == turn
+      if @board[move_seq.first].color != turn
         raise InvalidMoveError.new "Cannot move opponent's piece."
+      elsif @board.empty?(move_seq.first)
+        raise InvalidMoveError.new "No piece here."
       end
       @board.perform_moves(move_seq)
     rescue InvalidMoveError => e

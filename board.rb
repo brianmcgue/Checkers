@@ -6,7 +6,6 @@ end
 
 class Board
   attr_reader :grid
-
   BOARDSIZE = 10
 
   def initialize(fill_board = true)
@@ -100,7 +99,11 @@ class Board
   end
 
   def to_s
-    output = " 0 1 2 3 4 5 6 7 8 9\n"
+    output = ""
+    BOARDSIZE.times do |i|
+      output += " #{i}"
+    end
+    output += "\n"
     BOARDSIZE.times do |row|
       output += "#{row}"
       BOARDSIZE.times do |col|
