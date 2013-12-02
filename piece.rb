@@ -29,7 +29,7 @@ class Piece
         [i + move_i * promoted_modifier, j + move_j]
       end
     end
-    moves.select { |move| move.min >= 0 && move.max < 10 }
+    moves.select { |move| move.min >= 0 && move.max < Board::BOARDSIZE }
   end
 
   def promoted?

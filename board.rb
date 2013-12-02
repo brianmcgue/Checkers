@@ -1,11 +1,13 @@
 require 'colorize'
 require_relative 'piece'
-require_relative 'invalid'
+
+class InvalidMoveError < StandardError
+end
 
 class Board
   attr_reader :grid
 
-  BOARDSIZE = 6
+  BOARDSIZE = 10
 
   def initialize(fill_board = true)
     make_board(fill_board)
@@ -55,7 +57,7 @@ class Board
     piece.promoted = true if piece.pos[0] == back_row
   end
 
-  def perform_jump(start,finish)
+  def perform_jump(start, finish)
     jump = [(start[0] + finish[0])/2, (start[1] + finish[1])/2]
 
     return false if invalid_jump(start, jump, finish)
@@ -88,7 +90,7 @@ class Board
     end
   end
 
-  def perform_slide(start,finish)
+  def perform_slide(start, finish)
     return false if invalid_slide(start, finish)
 
     self[finish], self[start] = self[start], nil
