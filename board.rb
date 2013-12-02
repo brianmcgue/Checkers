@@ -3,6 +3,8 @@ require_relative 'piece'
 require_relative 'invalid'
 
 class Board
+  attr_reader :grid
+
   def initialize(fill_board = true)
     make_board(fill_board)
   end
@@ -22,6 +24,7 @@ class Board
     10.times do |row|
       10.times do |col|
         pos = [row, col]
+        next if empty?(pos)
         piece = self[pos]
         board_dup[pos] = Piece.new(pos, piece.color, board_dup, piece.promoted?)
       end
@@ -60,11 +63,21 @@ class Board
   end
 
   def perform_moves(move_seq)
-    perform_moves!(move_seq) if valid_move_seq?(move_seq)
+    raise InvalidMoveError.new unless valid_move_seq?(move_seq)
+    perform_moves!(move_seq)
   end
 
   def perform_moves!(move_seq)
-
+    if move_seq.count == 2
+      unless perform_slide(*move_seq) || perform_jump(*move_seq)
+        raise InvalidMoveError.new
+      end
+    else
+      move_seq.each_index do |idx|
+        next if idx == move_seq.count - 1
+        raise InvalidMoveError.new unless perform_jump(*move_seq[idx..idx+1])
+      end
+    end
   end
 
   def perform_slide(start,finish)
@@ -99,7 +112,6 @@ class Board
       board_dup = self.dup
       board_dup.perform_moves!(move_seq)
     rescue InvalidMoveError
-      puts "You've made an invalid move."
       false
     else
       true
