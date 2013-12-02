@@ -5,6 +5,8 @@ require_relative 'invalid'
 class Board
   attr_reader :grid
 
+  BOARDSIZE = 6
+
   def initialize(fill_board = true)
     make_board(fill_board)
   end
@@ -21,8 +23,8 @@ class Board
 
   def dup
     board_dup = Board.new(false)
-    10.times do |row|
-      10.times do |col|
+    BOARDSIZE.times do |row|
+      BOARDSIZE.times do |col|
         pos = [row, col]
         next if empty?(pos)
         piece = self[pos]
@@ -37,18 +39,20 @@ class Board
   end
 
   def invalid_jump(start, jump, finish)
-    empty?(start) || empty?(jump) || !empty?(finish) ||
+    diff = [(start[0]-finish[0]).abs, (start[1]-finish[1]).abs]
+    empty?(start) || empty?(jump) || !empty?(finish) || diff != [2, 2] ||
     self[start].color == self[jump].color || !self[start].moves.include?(finish)
   end
 
   def invalid_slide(start, finish)
-    empty?(start) || !empty?(finish) ||
+    diff = [(start[0]-finish[0]).abs, (start[1]-finish[1]).abs]
+    empty?(start) || !empty?(finish) || diff != [1, 1] ||
     !self[start].moves.include?(finish)
   end
 
   def maybe_promote?(piece)
-    back_row = (piece.color == :black ? 9 : 0)
-    piece.promote = true if piece.pos[0] == back_row
+    back_row = (piece.color == :black ? (BOARDSIZE - 1) : 0)
+    piece.promoted = true if piece.pos[0] == back_row
   end
 
   def perform_jump(start,finish)
@@ -63,19 +67,23 @@ class Board
   end
 
   def perform_moves(move_seq)
-    raise InvalidMoveError.new unless valid_move_seq?(move_seq)
+    unless valid_move_seq?(move_seq)
+      raise InvalidMoveError.new "Problem performing move sequence."
+    end
     perform_moves!(move_seq)
   end
 
   def perform_moves!(move_seq)
     if move_seq.count == 2
       unless perform_slide(*move_seq) || perform_jump(*move_seq)
-        raise InvalidMoveError.new
+        raise InvalidMoveError.new "Invalid slide or jump."
       end
     else
       move_seq.each_index do |idx|
         next if idx == move_seq.count - 1
-        raise InvalidMoveError.new unless perform_jump(*move_seq[idx..idx+1])
+        unless perform_jump(*move_seq[idx..idx+1])
+          raise InvalidMoveError.new "Invalid sequence of jumps."
+        end
       end
     end
   end
@@ -91,9 +99,9 @@ class Board
 
   def to_s
     output = " 0 1 2 3 4 5 6 7 8 9\n"
-    10.times do |row|
+    BOARDSIZE.times do |row|
       output += "#{row}"
-      10.times do |col|
+      BOARDSIZE.times do |col|
         pos = [row, col]
         bg = (row.odd? ^ col.odd? ? :white : :light_white)
         if self.empty?(pos)
@@ -120,12 +128,12 @@ class Board
 
   private
   def make_board(fill_board)
-    @grid = Array.new(10){Array.new(10){nil}}
+    @grid = Array.new(BOARDSIZE){Array.new(BOARDSIZE){nil}}
     if fill_board
-      10.times do |row|
-        next if row.between?(4,5)
-        color = (row < 4 ? :black : :red)
-        10.times do |col|
+      BOARDSIZE.times do |row|
+        next if row.between?((BOARDSIZE/2 - 1), (BOARDSIZE/2))
+        color = (row < (BOARDSIZE/2 - 1) ? :black : :white)
+        BOARDSIZE.times do |col|
           next unless row.odd? ^ col.odd?
           pos = [row, col]
           self[pos] = Piece.new(pos, color, self)
@@ -134,6 +142,3 @@ class Board
     end
   end
 end
-
-# board = Board.new
-# puts board
